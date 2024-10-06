@@ -1,0 +1,15 @@
+[package]
+name = "finnit_backend"
+version = "0.1.0"
+description = "Backend for finnit"
+categories = ["finance"]
+keywords = ["personal finance"]
+readme = "README.md"
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+log = { version = "0.4" }
+finnit_abi = { version = "0.1", path = "../abi" }

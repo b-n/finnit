@@ -1,0 +1,33 @@
+[package]
+name = "finnit"
+version = "0.1.0"
+categories = ["finance"]
+keywords = ["personal finance"]
+description = "A ratatui based app for tracking personal finances"
+exclude = [
+  "/.github"
+]
+readme = "README.md"
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[workspace]
+members = [
+  "frontend",
+  "backend",
+  "abi",
+]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+homepage = "https://www.github.com/b-n/finnit"
+repository = "https://www.github.com/b-n/finnit"
+
+[dependencies]
+log = { version = "0.4" }
+env_logger = { version = "0.11.5" }
+finnit_backend = { version = "0.1", path = "backend" }
+finnit_frontend = { version = "0.1", path = "frontend" }
