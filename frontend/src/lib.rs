@@ -1,25 +1,18 @@
+use core::time::Duration;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use log::{error, info};
-use ratatui::{
-    buffer::Buffer,
-    layout::{Alignment, Rect},
-    style::Stylize,
-    symbols::border,
-    text::{Line, Text},
-    widgets::{
-        block::{Position, Title},
-        Block, Paragraph, Widget,
-    },
-    DefaultTerminal, Frame,
-};
+use ratatui::DefaultTerminal;
 use std::io;
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
-use std::time::Duration;
+use std::sync::{Arc, RwLock};
 
 use finnit_abi::{BackendMessage, FrontendMessage};
 
+mod views;
+//use views::View;
+
 #[derive(Debug, Default)]
-struct State {
+pub(crate) struct State {
     running: bool,
     exiting: bool,
 }
@@ -27,17 +20,20 @@ struct State {
 pub struct App {
     tx: Sender<FrontendMessage>,
     rx: Option<Receiver<BackendMessage>>,
-    state: State,
+    state: Arc<RwLock<State>>,
+    layout: views::Layout,
 }
 
 impl App {
     pub fn new() -> (Self, Receiver<FrontendMessage>) {
+        let state = Arc::new(RwLock::new(State::default()));
         let (tx, rx) = mpsc::channel();
         (
             App {
                 tx,
                 rx: None,
-                state: State::default(),
+                state,
+                layout: views::Layout::default(),
             },
             rx,
         )
@@ -55,18 +51,28 @@ impl App {
     }
 
     fn ui_loop(&mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
-        self.state.running = true;
+        {
+            let mut state = self.state.write().unwrap();
+            state.running = true;
+        }
         self.tx.send(FrontendMessage::Ping).unwrap();
 
-        while !self.state.exiting {
+        while self.running() {
             self.handle_backend_events();
             self.handle_ui_events()?;
+
             // Render UI
-            terminal.draw(|frame| self.draw_ui(frame))?;
+            terminal.draw(|frame| {
+                self.layout.draw(frame);
+            })?;
         }
 
         self.tx.send(FrontendMessage::Stop).unwrap();
         Ok(())
+    }
+
+    fn running(&self) -> bool {
+        !self.state.read().unwrap().exiting
     }
 
     fn handle_backend_events(&mut self) {
@@ -77,7 +83,8 @@ impl App {
                 Err(TryRecvError::Empty) => None,
                 Err(TryRecvError::Disconnected) => {
                     error!("Backend disconnected");
-                    self.state.exiting = true;
+                    let mut state = self.state.write().unwrap();
+                    state.exiting = true;
                     None
                 }
             };
@@ -97,38 +104,21 @@ impl App {
         if let Ok(true) = event {
             match event::read()? {
                 Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                    if let KeyCode::Char('q') = key_event.code {
-                        self.state.exiting = true;
+                    match key_event.code {
+                        KeyCode::Char('q') => {
+                            let mut state = self.state.write().unwrap();
+                            state.exiting = true;
+                        }
+                        KeyCode::Char('h') => self.layout.view = views::View::Home,
+                        KeyCode::Char('b') => self.layout.view = views::View::Budget,
+                        KeyCode::Char('g') => self.layout.view = views::View::Grouping,
+                        KeyCode::Char('t') => self.layout.view = views::View::Transaction,
+                        _ => {}
                     }
                 }
                 _ => {}
             }
         }
         Ok(())
-    }
-
-    fn draw_ui(&self, frame: &mut Frame) {
-        frame.render_widget(self, frame.area());
-    }
-}
-
-impl Widget for &App {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let title = Title::from("Finnit".bold());
-        let instructions = Title::from(Line::from(vec!["Meh".bold().blue()]));
-        let block = Block::bordered()
-            .title(title.alignment(Alignment::Center))
-            .title(
-                instructions
-                    .alignment(Alignment::Left)
-                    .position(Position::Bottom),
-            )
-            .border_set(border::THICK);
-
-        let text = Text::from(vec![Line::from(vec!["Hello world".into()])]);
-        Paragraph::new(text)
-            .centered()
-            .block(block)
-            .render(area, buf);
     }
 }

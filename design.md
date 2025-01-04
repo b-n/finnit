@@ -30,3 +30,8 @@ Transaction (T)
 - Reference
 - Description 
 - BudgetId (optional)
+
+Home (I/H)
+- Info and/or help
+
+Logs (O)
