@@ -96,3 +96,11 @@ impl Layout {
         self.show_help = !self.show_help;
     }
 }
+
+impl Layout {
+    pub fn set_transactions(&mut self, transactions: Vec<finnit_abi::Transaction>) {
+        if let LoadedView::Transaction(view) = &mut self.views.transaction {
+            view.set_transactions(transactions);
+        }
+    }
+}

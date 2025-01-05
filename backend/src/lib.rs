@@ -1,7 +1,8 @@
 use log::info;
 use std::sync::mpsc::{self, Receiver, Sender};
+use tz::{DateTime, TimeZone};
 
-use finnit_abi::{BackendMessage, FrontendMessage};
+use finnit_abi::{BackendMessage, FrontendMessage, Transaction};
 
 #[derive(Debug, Default)]
 struct State {
@@ -49,7 +50,21 @@ impl App {
                         self.tx.send(BackendMessage::Pong).unwrap();
                     }
                     FrontendMessage::GetTransactions => {
-                        todo!()
+                        let mut transactions = vec![];
+                        for i in 0..10 {
+                            transactions.push(Transaction {
+                                id: format!("{i}"),
+                                account: format!("{i}"),
+                                datetime: DateTime::now(TimeZone::utc().as_ref()).unwrap(),
+                                description: format!("Transaction {}", i),
+                                source: format!("Somewhere {i}"),
+                                target: format!("To here {i} {i}"),
+                                amount: i,
+                            });
+                        }
+                        self.tx
+                            .send(BackendMessage::Transactions(transactions))
+                            .unwrap();
                     }
                 }
             }

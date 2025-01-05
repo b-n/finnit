@@ -94,6 +94,9 @@ impl App {
                 info!("Received: {:?}", message);
                 match message {
                     BackendMessage::Pong => {}
+                    BackendMessage::Transactions(t) => {
+                        self.layout.set_transactions(t);
+                    }
                 }
             }
         }

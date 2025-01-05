@@ -10,6 +10,7 @@ pub enum FrontendMessage {
 #[derive(Debug, Clone)]
 pub enum BackendMessage {
     Pong,
+    Transactions(Vec<Transaction>),
 }
 
 // Currency is dealt with the smallest unit of the currency. For the Euro, this is the cent.
