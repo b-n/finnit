@@ -8,6 +8,7 @@ use std::sync::{Arc, RwLock};
 
 use finnit_abi::{BackendMessage, FrontendMessage};
 
+mod traits;
 mod views;
 //use views::View;
 
@@ -30,10 +31,10 @@ impl App {
         let (tx, rx) = mpsc::channel();
         (
             App {
-                tx,
+                tx: tx.clone(),
                 rx: None,
                 state,
-                layout: views::Layout::default(),
+                layout: views::Layout::with_sender(tx.clone()),
             },
             rx,
         )
@@ -109,9 +110,9 @@ impl App {
                             let mut state = self.state.write().unwrap();
                             state.exiting = true;
                         }
-                        KeyCode::Char('b') => self.layout.view = views::View::Budget,
-                        KeyCode::Char('g') => self.layout.view = views::View::Grouping,
-                        KeyCode::Char('t') => self.layout.view = views::View::Transaction,
+                        KeyCode::Char('b') => self.layout.set_view(views::View::Budget),
+                        KeyCode::Char('g') => self.layout.set_view(views::View::Grouping),
+                        KeyCode::Char('t') => self.layout.set_view(views::View::Transaction),
                         KeyCode::Char('?') => self.layout.toggle_help(),
                         _ => {}
                     }

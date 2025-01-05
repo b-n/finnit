@@ -1,3 +1,4 @@
+use finnit_abi::FrontendMessage;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -6,9 +7,21 @@ use ratatui::{
     text::{Line, Text},
     widgets::{block::Title, Block, Paragraph, Widget},
 };
+use std::sync::mpsc::Sender;
 
-#[derive(Default, Clone)]
-pub struct Transaction {}
+use crate::traits::FinnitView;
+
+#[derive(Clone)]
+pub struct Transaction {
+    sender: Sender<FrontendMessage>,
+}
+
+impl FinnitView for Transaction {
+    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+        Self { sender }
+    }
+}
+
 
 impl Widget for &Transaction {
     fn render(self, area: Rect, buf: &mut Buffer) {

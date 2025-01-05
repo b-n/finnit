@@ -1,36 +1,67 @@
+use finnit_abi::FrontendMessage;
 use ratatui::{
     layout::{Constraint, Direction, Layout as RLayout, Rect},
     Frame,
 };
 use std::cmp::min;
+use std::sync::mpsc::Sender;
+
+use crate::traits::FinnitView;
 
 mod budget;
 mod common;
+mod enums;
 mod grouping;
 mod transaction;
 
-#[derive(Eq, PartialEq, Hash, Clone, Default)]
-pub enum View {
-    #[default]
-    Budget,
-    Grouping,
-    Transaction,
-}
+pub use enums::{all_views, View};
 
-#[derive(Default, Clone)]
+use budget::Budget;
+use common::{Footer, Header, Help};
+use enums::LoadedView;
+use grouping::Grouping;
+use transaction::Transaction;
+
 pub struct Layout {
-    pub view: View,
-    budget: budget::Budget,
-    grouping: grouping::Grouping,
-    transaction: transaction::Transaction,
-    footer: common::Footer,
-    header: common::Header,
-    help: common::Help,
+    view: View,
+    views: Views,
     show_help: bool,
 }
 
+pub struct Views {
+    budget: LoadedView,
+    grouping: LoadedView,
+    transaction: LoadedView,
+    footer: LoadedView,
+    header: LoadedView,
+    help: LoadedView,
+}
+
 impl Layout {
-    pub fn draw(&self, frame: &mut Frame) {
+    pub fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+        let views = all_views(sender);
+
+        Self {
+            view: View::Budget,
+            views,
+            show_help: false,
+        }
+    }
+
+    pub fn set_view(&mut self, view: View) {
+        self.view = view;
+        self.active_view().on_activate();
+    }
+
+    fn active_view(&mut self) -> &mut LoadedView {
+        match self.view {
+            View::Budget => &mut self.views.budget,
+            View::Grouping => &mut self.views.grouping,
+            View::Transaction => &mut self.views.transaction,
+        }
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
         let area = frame.area();
         let chunks = RLayout::default()
             .direction(Direction::Vertical)
@@ -43,20 +74,12 @@ impl Layout {
 
         let (header, content, footer) = (chunks[0], chunks[1], chunks[2]);
 
-        frame.render_widget(&self.header, header);
+        frame.render_widget(&self.views.header, header);
 
-        match self.view {
-            View::Budget => {
-                frame.render_widget(&self.budget, content);
-            }
-            View::Grouping => {
-                frame.render_widget(&self.grouping, content);
-            }
-            View::Transaction => {
-                frame.render_widget(&self.transaction, content);
-            }
-        };
-        frame.render_widget(&self.footer, footer);
+        let active_view: &LoadedView = self.active_view();
+        frame.render_widget(active_view, content);
+
+        frame.render_widget(&self.views.footer, footer);
 
         if self.show_help {
             let popup_area = Rect {
@@ -65,7 +88,7 @@ impl Layout {
                 width: min(60, area.width),
                 height: min(15, area.height),
             };
-            frame.render_widget(&self.help, popup_area);
+            frame.render_widget(&self.views.help, popup_area);
         }
     }
 

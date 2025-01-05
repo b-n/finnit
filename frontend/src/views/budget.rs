@@ -1,3 +1,4 @@
+use finnit_abi::FrontendMessage;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -6,9 +7,20 @@ use ratatui::{
     text::{Line, Text},
     widgets::{block::Title, Block, Paragraph, Widget},
 };
+use std::sync::mpsc::Sender;
 
-#[derive(Default, Clone)]
-pub struct Budget {}
+use crate::traits::FinnitView;
+
+#[derive(Clone)]
+pub struct Budget {
+    sender: Sender<FrontendMessage>,
+}
+
+impl FinnitView for Budget {
+    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+        Self { sender }
+    }
+}
 
 impl Widget for &Budget {
     fn render(self, area: Rect, buf: &mut Buffer) {
