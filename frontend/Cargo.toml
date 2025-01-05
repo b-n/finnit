@@ -16,3 +16,4 @@ ratatui = { version = "0.28.1" }
 crossterm = { version = "0.28.1" }
 finnit_backend = { version = "0.1", path = "../backend" }
 finnit_abi = { version = "0.1", path = "../abi" }
+tz-rs = { version = "0.7" }

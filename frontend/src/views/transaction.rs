@@ -20,8 +20,11 @@ impl FinnitView for Transaction {
     fn with_sender(sender: Sender<FrontendMessage>) -> Self {
         Self { sender }
     }
-}
 
+    fn on_activate(&mut self) {
+        self.sender.send(FrontendMessage::GetTransactions).unwrap();
+    }
+}
 
 impl Widget for &Transaction {
     fn render(self, area: Rect, buf: &mut Buffer) {

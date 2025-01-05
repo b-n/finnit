@@ -8,9 +8,9 @@ use std::sync::{Arc, RwLock};
 
 use finnit_abi::{BackendMessage, FrontendMessage};
 
+mod models;
 mod traits;
 mod views;
-//use views::View;
 
 #[derive(Debug, Default)]
 pub(crate) struct State {

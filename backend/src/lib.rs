@@ -48,6 +48,9 @@ impl App {
                     FrontendMessage::Ping => {
                         self.tx.send(BackendMessage::Pong).unwrap();
                     }
+                    FrontendMessage::GetTransactions => {
+                        todo!()
+                    }
                 }
             }
         }

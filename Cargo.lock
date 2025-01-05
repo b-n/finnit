@@ -208,6 +208,9 @@ dependencies = [
 [[package]]
 name = "finnit_abi"
 version = "0.1.0"
+dependencies = [
+ "tz-rs",
+]
 
 [[package]]
 name = "finnit_backend"
@@ -226,6 +229,7 @@ dependencies = [
  "finnit_backend",
  "log",
  "ratatui",
+ "tz-rs",
 ]
 
 [[package]]
@@ -560,6 +564,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "tz-rs"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1450bf2b99397e72070e7935c89facaa80092ac812502200375f1f7d33c71a1"
 
 [[package]]
 name = "unicode-ident"
