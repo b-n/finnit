@@ -109,10 +109,10 @@ impl App {
                             let mut state = self.state.write().unwrap();
                             state.exiting = true;
                         }
-                        KeyCode::Char('h') => self.layout.view = views::View::Home,
                         KeyCode::Char('b') => self.layout.view = views::View::Budget,
                         KeyCode::Char('g') => self.layout.view = views::View::Grouping,
                         KeyCode::Char('t') => self.layout.view = views::View::Transaction,
+                        KeyCode::Char('?') => self.layout.toggle_help(),
                         _ => {}
                     }
                 }
