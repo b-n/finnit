@@ -1,5 +1,5 @@
 use crate::traits::FinnitView;
-use finnit_abi::FrontendMessage;
+use finnit_abi::FrontendMessageSender;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -7,17 +7,20 @@ use ratatui::{
     symbols::border,
     text::{Line, Text},
     widgets::{block::Title, Block, Paragraph, Widget},
+    Frame,
 };
-use std::sync::mpsc::Sender;
 
 #[derive(Clone)]
 pub struct Grouping {
-    sender: Sender<FrontendMessage>,
+    sender: FrontendMessageSender,
 }
 
 impl FinnitView for Grouping {
-    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+    fn with_sender(sender: FrontendMessageSender) -> Self {
         Self { sender }
+    }
+    fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
     }
 }
 

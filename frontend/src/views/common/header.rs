@@ -1,9 +1,13 @@
+use crate::traits::FinnitView;
+use finnit_abi::FrontendMessageSender;
+
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     prelude::Stylize,
     text::{Line, Text},
     widgets::{Paragraph, Widget},
+    Frame,
 };
 
 #[derive(Default, Clone)]
@@ -59,6 +63,16 @@ impl Header {
             Line::from("     ###########   "),
             Line::from("      ##    ##     "),
         ])
+    }
+}
+
+impl FinnitView for Header {
+    fn with_sender(_sender: FrontendMessageSender) -> Self {
+        Self::default()
+    }
+
+    fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
     }
 }
 

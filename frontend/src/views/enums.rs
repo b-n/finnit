@@ -1,8 +1,7 @@
 use crate::traits::FinnitView;
 use crate::views::{Budget, Footer, Grouping, Header, Help, Transaction};
-use finnit_abi::FrontendMessage;
-use ratatui::{buffer::Buffer, layout::Rect, widgets::Widget};
-use std::sync::mpsc::Sender;
+use finnit_abi::FrontendMessageSender;
+use ratatui::{layout::Rect, Frame};
 
 #[derive(Eq, PartialEq, Hash, Clone, Default)]
 pub enum View {
@@ -21,7 +20,7 @@ pub enum LoadedView {
     Help(Help),
 }
 
-pub fn all_views(sender: Sender<FrontendMessage>) -> crate::views::Views {
+pub fn all_views(sender: FrontendMessageSender) -> crate::views::Views {
     crate::views::Views {
         budget: LoadedView::Budget(Budget::with_sender(sender.clone())),
         grouping: LoadedView::Grouping(Grouping::with_sender(sender.clone())),
@@ -34,31 +33,29 @@ pub fn all_views(sender: Sender<FrontendMessage>) -> crate::views::Views {
 
 impl FinnitView for LoadedView {
     // Needed for blanket implementation, but we will never need/use this.
-    fn with_sender(_sender: Sender<FrontendMessage>) -> Self {
+    fn with_sender(_sender: FrontendMessageSender) -> Self {
         unreachable!()
     }
 
     fn on_activate(&mut self) {
         match self {
-            LoadedView::Budget(b) => b.on_activate(),
-            LoadedView::Grouping(g) => g.on_activate(),
-            LoadedView::Transaction(t) => t.on_activate(),
-            _ => {
-                unreachable!()
-            }
+            LoadedView::Budget(v) => v.on_activate(),
+            LoadedView::Grouping(v) => v.on_activate(),
+            LoadedView::Transaction(v) => v.on_activate(),
+            LoadedView::Header(v) => v.on_activate(),
+            LoadedView::Footer(v) => v.on_activate(),
+            LoadedView::Help(v) => v.on_activate(),
         }
     }
-}
 
-impl Widget for &LoadedView {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn draw(&self, frame: &mut Frame, area: Rect) {
         match self {
-            LoadedView::Budget(v) => v.render(area, buf),
-            LoadedView::Grouping(v) => v.render(area, buf),
-            LoadedView::Transaction(v) => v.render(area, buf),
-            LoadedView::Footer(v) => v.render(area, buf),
-            LoadedView::Header(v) => v.render(area, buf),
-            LoadedView::Help(v) => v.render(area, buf),
+            LoadedView::Budget(v) => v.draw(frame, area),
+            LoadedView::Grouping(v) => v.draw(frame, area),
+            LoadedView::Transaction(v) => v.draw(frame, area),
+            LoadedView::Header(v) => v.draw(frame, area),
+            LoadedView::Footer(v) => v.draw(frame, area),
+            LoadedView::Help(v) => v.draw(frame, area),
         }
     }
 }

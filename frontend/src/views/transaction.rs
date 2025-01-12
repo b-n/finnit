@@ -1,4 +1,4 @@
-use finnit_abi::FrontendMessage;
+use finnit_abi::{FrontendMessage, FrontendMessageSender};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Rect},
@@ -6,6 +6,7 @@ use ratatui::{
     symbols::border,
     text::Text,
     widgets::{block::Title, Block, Cell, Row, ScrollbarState, Table, TableState, Widget},
+    Frame,
 };
 use std::sync::mpsc::Sender;
 
@@ -13,7 +14,7 @@ use crate::traits::{FinnitView, TableRow};
 
 #[derive(Clone)]
 pub struct Transaction {
-    sender: Sender<FrontendMessage>,
+    sender: FrontendMessageSender,
     transactions: Vec<finnit_abi::Transaction>,
     state: TableState,
     scroll_state: ScrollbarState,
@@ -37,6 +38,10 @@ impl FinnitView for Transaction {
 
     fn on_activate(&mut self) {
         self.sender.send(FrontendMessage::GetTransactions).unwrap();
+    }
+
+    fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
     }
 }
 

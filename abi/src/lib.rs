@@ -1,4 +1,7 @@
+use std::sync::mpsc::Sender;
 use tz::DateTime;
+
+pub type FrontendMessageSender = Sender<FrontendMessage>;
 
 #[derive(Debug, Clone)]
 pub enum FrontendMessage {

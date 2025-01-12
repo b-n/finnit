@@ -74,13 +74,12 @@ impl Layout {
 
         let (header, content, footer) = (chunks[0], chunks[1], chunks[2]);
 
-        frame.render_widget(&self.views.header, header);
+        // Render the main page chunks
+        self.views.header.draw(frame, header);
+        self.active_view().draw(frame, content);
+        self.views.footer.draw(frame, footer);
 
-        let active_view: &LoadedView = self.active_view();
-        frame.render_widget(active_view, content);
-
-        frame.render_widget(&self.views.footer, footer);
-
+        // Render popups
         if self.show_help {
             let popup_area = Rect {
                 x: area.width.saturating_sub(60) / 2,
@@ -88,7 +87,7 @@ impl Layout {
                 width: min(60, area.width),
                 height: min(15, area.height),
             };
-            frame.render_widget(&self.views.help, popup_area);
+            self.views.help.draw(frame, popup_area);
         }
     }
 

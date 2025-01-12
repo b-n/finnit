@@ -1,3 +1,5 @@
+use crate::traits::FinnitView;
+use finnit_abi::FrontendMessageSender;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -5,6 +7,7 @@ use ratatui::{
     style::Style,
     text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph, Widget, Wrap},
+    Frame,
 };
 
 #[derive(Default, Clone)]
@@ -16,6 +19,16 @@ impl Help {
     pub fn with_title(mut self, title: &str) -> Self {
         self.title = title.to_string();
         self
+    }
+}
+
+impl FinnitView for Help {
+    fn with_sender(_sender: FrontendMessageSender) -> Self {
+        Self::default()
+    }
+
+    fn draw(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
     }
 }
 
