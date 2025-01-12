@@ -6,7 +6,7 @@ use ratatui::{
 use std::cmp::min;
 use std::sync::mpsc::Sender;
 
-use crate::traits::FinnitView;
+use crate::FinnitView;
 
 mod budget;
 mod common;
@@ -38,7 +38,34 @@ pub struct Views {
 }
 
 impl Layout {
-    pub fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+    pub fn set_view(&mut self, view: View) {
+        self.view = view;
+        self.mut_active_view().on_activate();
+    }
+
+    fn active_view(&self) -> &LoadedView {
+        match self.view {
+            View::Budget => &self.views.budget,
+            View::Grouping => &self.views.grouping,
+            View::Transaction => &self.views.transaction,
+        }
+    }
+
+    fn mut_active_view(&mut self) -> &mut LoadedView {
+        match self.view {
+            View::Budget => &mut self.views.budget,
+            View::Grouping => &mut self.views.grouping,
+            View::Transaction => &mut self.views.transaction,
+        }
+    }
+
+    pub fn toggle_help(&mut self) {
+        self.show_help = !self.show_help;
+    }
+}
+
+impl FinnitView for Layout {
+    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
         let views = all_views(sender);
 
         Self {
@@ -48,21 +75,7 @@ impl Layout {
         }
     }
 
-    pub fn set_view(&mut self, view: View) {
-        self.view = view;
-        self.active_view().on_activate();
-    }
-
-    fn active_view(&mut self) -> &mut LoadedView {
-        match self.view {
-            View::Budget => &mut self.views.budget,
-            View::Grouping => &mut self.views.grouping,
-            View::Transaction => &mut self.views.transaction,
-        }
-    }
-
-    pub fn draw(&mut self, frame: &mut Frame) {
-        let area = frame.area();
+    fn draw(&self, frame: &mut Frame, area: Rect) {
         let chunks = RLayout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -89,10 +102,6 @@ impl Layout {
             };
             self.views.help.draw(frame, popup_area);
         }
-    }
-
-    pub fn toggle_help(&mut self) {
-        self.show_help = !self.show_help;
     }
 }
 

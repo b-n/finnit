@@ -1,4 +1,4 @@
-use crate::traits::FinnitView;
+use crate::FinnitView;
 use finnit_abi::FrontendMessageSender;
 
 use ratatui::{

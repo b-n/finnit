@@ -10,7 +10,7 @@ use ratatui::{
 };
 use std::sync::mpsc::Sender;
 
-use crate::traits::{FinnitView, TableRow};
+use crate::{traits::TableRow, FinnitView};
 
 #[derive(Clone)]
 pub struct Transaction {

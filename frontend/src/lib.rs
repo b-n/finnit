@@ -12,6 +12,8 @@ mod models;
 mod traits;
 mod views;
 
+pub use traits::FinnitView;
+
 #[derive(Debug, Default)]
 pub(crate) struct State {
     running: bool,
@@ -64,7 +66,7 @@ impl App {
 
             // Render UI
             terminal.draw(|frame| {
-                self.layout.draw(frame);
+                self.layout.draw(frame, frame.area());
             })?;
         }
 
