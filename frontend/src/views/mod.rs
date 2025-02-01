@@ -6,7 +6,7 @@ use ratatui::{
 use std::cmp::min;
 use std::sync::mpsc::Sender;
 
-use crate::FinnitView;
+use crate::{FinnitView, InputEvent};
 
 mod budget;
 mod common;
@@ -101,6 +101,14 @@ impl FinnitView for Layout {
                 height: min(15, area.height),
             };
             self.views.help.draw(frame, popup_area);
+        }
+    }
+
+    fn on_input_event(&mut self, event: InputEvent) {
+        match event {
+            InputEvent::ChangeView(view) => self.set_view(view),
+            InputEvent::ToggleModal => self.toggle_help(),
+            _ => self.mut_active_view().on_input_event(event),
         }
     }
 }

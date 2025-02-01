@@ -1,5 +1,5 @@
 use core::time::Duration;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::event;
 use log::{error, info};
 use ratatui::DefaultTerminal;
 use std::io;
@@ -8,10 +8,12 @@ use std::sync::{Arc, RwLock};
 
 use finnit_abi::{BackendMessage, FrontendMessage};
 
+mod input_events;
 mod models;
 mod traits;
 mod views;
 
+pub use input_events::InputEvent;
 pub use traits::FinnitView;
 
 #[derive(Debug, Default)]
@@ -62,7 +64,7 @@ impl App {
 
         while self.running() {
             self.handle_backend_events();
-            self.handle_ui_events()?;
+            self.handle_input_events()?;
 
             // Render UI
             terminal.draw(|frame| {
@@ -104,25 +106,21 @@ impl App {
         }
     }
 
-    fn handle_ui_events(&mut self) -> io::Result<()> {
+    fn handle_input_events(&mut self) -> io::Result<()> {
+        // We only handle about press events, and we only care about keycode (for now)
         let event = event::poll(Duration::from_millis(10));
 
         if let Ok(true) = event {
-            match event::read()? {
-                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                    match key_event.code {
-                        KeyCode::Char('q') => {
-                            let mut state = self.state.write().unwrap();
-                            state.exiting = true;
-                        }
-                        KeyCode::Char('b') => self.layout.set_view(views::View::Budget),
-                        KeyCode::Char('g') => self.layout.set_view(views::View::Grouping),
-                        KeyCode::Char('t') => self.layout.set_view(views::View::Transaction),
-                        KeyCode::Char('?') => self.layout.toggle_help(),
-                        _ => {}
+            let event = event::read()?.try_into();
+
+            if let Ok(event) = event {
+                match event {
+                    InputEvent::Exit => {
+                        let mut state = self.state.write().unwrap();
+                        state.exiting = true;
                     }
+                    _ => self.layout.on_input_event(event),
                 }
-                _ => {}
             }
         }
         Ok(())
