@@ -1,59 +1,64 @@
 use finnit_abi::{FrontendMessage, FrontendMessageSender};
+use log::info;
 use ratatui::{
-    buffer::Buffer,
-    layout::{Alignment, Constraint, Rect},
+    layout::{Constraint, Margin, Rect},
     style::Stylize,
     symbols::border,
-    text::Text,
-    widgets::{block::Title, Block, Cell, Row, ScrollbarState, Table, TableState, Widget},
+    text::{Line, Text},
+    widgets::{
+        Block, Cell, Row, ScrollDirection, Scrollbar, ScrollbarOrientation, ScrollbarState, Table,
+        TableState,
+    },
     Frame,
 };
 use std::sync::mpsc::Sender;
 
-use crate::{traits::TableRow, FinnitView};
+use crate::{traits::TableRow, FinnitView, InputEvent};
 
 #[derive(Clone)]
 pub struct Transaction {
     sender: FrontendMessageSender,
     transactions: Vec<finnit_abi::Transaction>,
-    state: TableState,
+    table_state: TableState,
     scroll_state: ScrollbarState,
 }
 
 impl Transaction {
     pub fn set_transactions(&mut self, transactions: Vec<finnit_abi::Transaction>) {
         self.transactions = transactions;
-    }
-}
-
-impl FinnitView for Transaction {
-    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
-        Self {
-            sender,
-            state: TableState::default(),
-            scroll_state: ScrollbarState::new(0),
-            transactions: vec![],
-        }
+        self.scroll_state = self.scroll_state.content_length(self.transactions.len());
+        self.table_state.select(Some(0));
+        self.scroll_state = self.scroll_state.position(0);
     }
 
-    fn on_activate(&mut self) {
-        self.sender.send(FrontendMessage::GetTransactions).unwrap();
+    fn move_row(&mut self, offset: usize, direction: ScrollDirection) {
+        let row = match (self.table_state.selected(), direction) {
+            (Some(i), ScrollDirection::Backward) => i.saturating_sub(offset),
+            (Some(i), ScrollDirection::Forward) => i.saturating_add(offset),
+            (None, ScrollDirection::Forward) => offset,
+            (None, ScrollDirection::Backward) => self.transactions.len().saturating_sub(offset),
+        };
+
+        self.table_state.select(Some(row));
+        self.scroll_state = self.scroll_state.position(row);
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(self, area);
-    }
-}
+    fn move_col(&mut self, offset: usize, direction: ScrollDirection) {
+        let col = match (self.table_state.selected_column(), direction) {
+            (Some(i), ScrollDirection::Backward) => i.saturating_sub(offset),
+            (Some(i), ScrollDirection::Forward) => i.saturating_add(offset),
+            (None, ScrollDirection::Forward) => offset,
+            (None, ScrollDirection::Backward) => self.transactions.len().saturating_sub(offset),
+        };
 
-impl Widget for &Transaction {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let title = Title::from(" Transaction ".bold());
+        self.table_state.select_column(Some(col));
+    }
+
+    fn render_table(&mut self, frame: &mut Frame, area: Rect) {
+        let title = Line::from(" Transaction ".bold());
         let block = Block::bordered()
-            .title(title.alignment(Alignment::Center))
+            .title(title.centered())
             .border_set(border::THICK);
-
-        let block_inner = block.inner(area);
-        block.render(area, buf);
 
         let header = ["ID", "Amount", "Type", "Date", "Description"]
             .into_iter()
@@ -69,7 +74,7 @@ impl Widget for &Transaction {
                 .height(1)
         });
 
-        Table::new(
+        let table = Table::new(
             rows,
             [
                 Constraint::Length(5),
@@ -82,6 +87,55 @@ impl Widget for &Transaction {
             ],
         )
         .header(header)
-        .render(block_inner, buf);
+        .block(block);
+
+        frame.render_stateful_widget(table, area, &mut self.table_state);
+    }
+
+    fn render_scrollbar(&mut self, frame: &mut Frame, area: Rect) {
+        let scrollbar = Scrollbar::default()
+            .orientation(ScrollbarOrientation::VerticalRight)
+            .begin_symbol(Some("B"))
+            .end_symbol(Some("E"));
+
+        frame.render_stateful_widget(
+            scrollbar,
+            area.inner(Margin {
+                vertical: 1,
+                horizontal: 1,
+            }),
+            &mut self.scroll_state,
+        );
+    }
+}
+
+impl FinnitView for Transaction {
+    fn with_sender(sender: Sender<FrontendMessage>) -> Self {
+        Self {
+            sender,
+            table_state: TableState::default(),
+            scroll_state: ScrollbarState::new(0),
+            transactions: vec![],
+        }
+    }
+
+    fn on_activate(&mut self) {
+        self.sender.send(FrontendMessage::GetTransactions).unwrap();
+    }
+
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
+        self.render_table(frame, area);
+        self.render_scrollbar(frame, area);
+    }
+
+    fn on_input_event(&mut self, event: InputEvent) {
+        info!("Transaction: {event:?}");
+        match event {
+            InputEvent::Up => self.move_row(1, ScrollDirection::Backward),
+            InputEvent::Down => self.move_row(1, ScrollDirection::Forward),
+            InputEvent::Left => self.move_col(1, ScrollDirection::Backward),
+            InputEvent::Right => self.move_col(1, ScrollDirection::Forward),
+            _ => {}
+        }
     }
 }

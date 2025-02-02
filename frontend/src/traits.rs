@@ -16,7 +16,7 @@ pub trait FinnitView {
     fn on_activate(&mut self) {}
 
     /// Draw the FinnitView in the `frame`'s `area`
-    fn draw(&self, frame: &mut Frame, area: Rect);
+    fn draw(&mut self, frame: &mut Frame, area: Rect);
 
     /// Handle a key press event
     fn on_input_event(&mut self, _key: InputEvent) {}

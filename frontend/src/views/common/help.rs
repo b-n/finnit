@@ -20,6 +20,10 @@ impl Help {
         self.title = title.to_string();
         self
     }
+
+    fn render_title(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
+    }
 }
 
 impl FinnitView for Help {
@@ -27,8 +31,8 @@ impl FinnitView for Help {
         Self::default()
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(self, area);
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
+        self.render_title(frame, area);
     }
 }
 

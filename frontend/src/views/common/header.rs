@@ -21,6 +21,10 @@ impl Header {
         self
     }
 
+    fn render_header(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
+    }
+
     pub fn statistics<'a>(&self) -> Text<'a> {
         let kvp = |key: &'a str, value: &'a str| {
             vec![
@@ -71,8 +75,8 @@ impl FinnitView for Header {
         Self::default()
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(self, area);
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
+        self.render_header(frame, area)
     }
 }
 

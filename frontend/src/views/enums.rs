@@ -1,9 +1,10 @@
-use crate::views::{Budget, Footer, Grouping, Header, Help, Transaction};
-use crate::FinnitView;
 use finnit_abi::FrontendMessageSender;
 use ratatui::{layout::Rect, Frame};
 
-#[derive(Eq, PartialEq, Hash, Clone, Default)]
+use crate::views::{Budget, Footer, Grouping, Header, Help, Transaction};
+use crate::{FinnitView, InputEvent};
+
+#[derive(Eq, PartialEq, Hash, Clone, Default, Debug)]
 pub enum View {
     #[default]
     Budget,
@@ -48,7 +49,7 @@ impl FinnitView for LoadedView {
         }
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) {
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
         match self {
             LoadedView::Budget(v) => v.draw(frame, area),
             LoadedView::Grouping(v) => v.draw(frame, area),
@@ -56,6 +57,17 @@ impl FinnitView for LoadedView {
             LoadedView::Header(v) => v.draw(frame, area),
             LoadedView::Footer(v) => v.draw(frame, area),
             LoadedView::Help(v) => v.draw(frame, area),
+        }
+    }
+
+    fn on_input_event(&mut self, event: InputEvent) {
+        match self {
+            LoadedView::Budget(v) => v.on_input_event(event),
+            LoadedView::Grouping(v) => v.on_input_event(event),
+            LoadedView::Transaction(v) => v.on_input_event(event),
+            LoadedView::Header(v) => v.on_input_event(event),
+            LoadedView::Footer(v) => v.on_input_event(event),
+            LoadedView::Help(v) => v.on_input_event(event),
         }
     }
 }

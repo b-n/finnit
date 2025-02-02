@@ -3,6 +3,7 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use crate::views::View;
 use std::convert::TryFrom;
 
+#[derive(Debug)]
 pub enum InputEvent {
     Exit,
     ChangeView(View),

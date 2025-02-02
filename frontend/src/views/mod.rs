@@ -1,4 +1,5 @@
 use finnit_abi::FrontendMessage;
+use log::info;
 use ratatui::{
     layout::{Constraint, Direction, Layout as RLayout, Rect},
     Frame,
@@ -40,18 +41,10 @@ pub struct Views {
 impl Layout {
     pub fn set_view(&mut self, view: View) {
         self.view = view;
-        self.mut_active_view().on_activate();
+        self.active_view().on_activate();
     }
 
-    fn active_view(&self) -> &LoadedView {
-        match self.view {
-            View::Budget => &self.views.budget,
-            View::Grouping => &self.views.grouping,
-            View::Transaction => &self.views.transaction,
-        }
-    }
-
-    fn mut_active_view(&mut self) -> &mut LoadedView {
+    fn active_view(&mut self) -> &mut LoadedView {
         match self.view {
             View::Budget => &mut self.views.budget,
             View::Grouping => &mut self.views.grouping,
@@ -75,7 +68,7 @@ impl FinnitView for Layout {
         }
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) {
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
         let chunks = RLayout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -105,10 +98,11 @@ impl FinnitView for Layout {
     }
 
     fn on_input_event(&mut self, event: InputEvent) {
+        info!("Layout: {event:?}");
         match event {
             InputEvent::ChangeView(view) => self.set_view(view),
             InputEvent::ToggleModal => self.toggle_help(),
-            _ => self.mut_active_view().on_input_event(event),
+            _ => self.active_view().on_input_event(event),
         }
     }
 }
