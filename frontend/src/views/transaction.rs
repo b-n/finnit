@@ -2,7 +2,7 @@ use finnit_abi::{FrontendMessage, FrontendMessageSender};
 use log::info;
 use ratatui::{
     layout::{Constraint, Margin, Rect},
-    style::Stylize,
+    style::{Color, Style, Stylize},
     symbols::border,
     text::{Line, Text},
     widgets::{
@@ -16,11 +16,27 @@ use std::sync::mpsc::Sender;
 use crate::{traits::TableRow, FinnitView, InputEvent};
 
 #[derive(Clone)]
+struct Styles {
+    selected_row: Style,
+    selected_column: Style,
+}
+
+impl Default for Styles {
+    fn default() -> Self {
+        Self {
+            selected_row: Style::default().fg(Color::White).bg(Color::Blue),
+            selected_column: Style::default().fg(Color::White).bg(Color::Blue),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Transaction {
     sender: FrontendMessageSender,
     transactions: Vec<finnit_abi::Transaction>,
     table_state: TableState,
     scroll_state: ScrollbarState,
+    styles: Styles,
 }
 
 impl Transaction {
@@ -45,13 +61,21 @@ impl Transaction {
 
     fn move_col(&mut self, offset: usize, direction: ScrollDirection) {
         let col = match (self.table_state.selected_column(), direction) {
-            (Some(i), ScrollDirection::Backward) => i.saturating_sub(offset),
-            (Some(i), ScrollDirection::Forward) => i.saturating_add(offset),
-            (None, ScrollDirection::Forward) => offset,
-            (None, ScrollDirection::Backward) => self.transactions.len().saturating_sub(offset),
+            (Some(i), ScrollDirection::Backward) => {
+                if i == 0 {
+                    None
+                } else {
+                    Some(i.saturating_sub(offset))
+                }
+            }
+            (Some(i), ScrollDirection::Forward) => Some(i.saturating_add(offset)),
+            (None, ScrollDirection::Forward) => Some(offset - 1),
+            (None, ScrollDirection::Backward) => {
+                Some(self.transactions.len().saturating_sub(offset))
+            }
         };
 
-        self.table_state.select_column(Some(col));
+        self.table_state.select_column(col);
     }
 
     fn render_table(&mut self, frame: &mut Frame, area: Rect) {
@@ -87,7 +111,9 @@ impl Transaction {
             ],
         )
         .header(header)
-        .block(block);
+        .block(block)
+        .row_highlight_style(self.styles.selected_row)
+        .column_highlight_style(self.styles.selected_column);
 
         frame.render_stateful_widget(table, area, &mut self.table_state);
     }
@@ -116,6 +142,7 @@ impl FinnitView for Transaction {
             table_state: TableState::default(),
             scroll_state: ScrollbarState::new(0),
             transactions: vec![],
+            styles: Styles::default(),
         }
     }
 
