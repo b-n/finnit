@@ -1,7 +1,6 @@
 use std::time::{Duration, SystemTime, SystemTimeError};
 
 pub struct Timer {
-    start: SystemTime,
     last: SystemTime,
     every: Option<Duration>,
 }
@@ -9,7 +8,6 @@ pub struct Timer {
 impl Timer {
     pub fn new() -> Timer {
         Timer {
-            start: SystemTime::now(),
             last: SystemTime::now(),
             every: None,
         }
