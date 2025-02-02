@@ -10,6 +10,7 @@ use finnit_abi::{BackendMessage, FrontendMessage};
 
 mod input_events;
 mod models;
+mod timer;
 mod traits;
 mod views;
 
@@ -62,14 +63,18 @@ impl App {
         }
         self.tx.send(FrontendMessage::Ping).unwrap();
 
+        let mut timer = timer::Timer::new().every(Duration::from_millis(60));
+
         while self.running() {
             self.handle_backend_events();
             self.handle_input_events()?;
 
-            // Render UI
-            terminal.draw(|frame| {
-                self.layout.draw(frame, frame.area());
-            })?;
+            if timer.check_every().expect("Time went backwards") {
+                // Render UI
+                terminal.draw(|frame| {
+                    self.layout.draw(frame, frame.area());
+                })?;
+            }
         }
 
         self.tx.send(FrontendMessage::Stop).unwrap();
@@ -107,8 +112,7 @@ impl App {
     }
 
     fn handle_input_events(&mut self) -> io::Result<()> {
-        // We only handle about press events, and we only care about keycode (for now)
-        let event = event::poll(Duration::from_millis(10));
+        let event = event::poll(Duration::from_millis(16));
 
         if let Ok(true) = event {
             let event = event::read()?.try_into();
