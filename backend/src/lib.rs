@@ -51,15 +51,15 @@ impl App {
                     }
                     FrontendMessage::GetTransactions => {
                         let mut transactions = vec![];
-                        for i in 0..10 {
+                        for i in 0..150 {
                             transactions.push(Transaction {
                                 id: format!("{i}"),
                                 account: format!("{i}"),
                                 datetime: DateTime::now(TimeZone::utc().as_ref()).unwrap(),
                                 description: format!("Transaction {}", i),
-                                source: format!("Somewhere {i}"),
-                                target: format!("To here {i} {i}"),
-                                amount: i,
+                                source: format!("NL00 IBAN 0000 {i:04} 00"),
+                                target: format!("NL00 IBAN {i:04} 0000 00"),
+                                amount: (i * 7).into(),
                             });
                         }
                         self.tx

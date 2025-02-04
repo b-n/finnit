@@ -13,7 +13,7 @@ use ratatui::{
 };
 use std::sync::mpsc::Sender;
 
-use crate::{traits::TableRow, FinnitView, InputEvent};
+use crate::{FinnitView, InputEvent};
 
 #[derive(Clone)]
 struct Styles {
@@ -25,15 +25,45 @@ impl Default for Styles {
     fn default() -> Self {
         Self {
             selected_row: Style::default().fg(Color::White).bg(Color::Blue),
-            selected_column: Style::default().fg(Color::White).bg(Color::Blue),
+            selected_column: Style::default().fg(Color::White).bg(Color::Red),
         }
     }
 }
 
-#[derive(Clone)]
+struct TransactionRow(finnit_abi::Transaction);
+
+impl From<finnit_abi::Transaction> for TransactionRow {
+    fn from(transaction: finnit_abi::Transaction) -> Self {
+        Self(transaction)
+    }
+}
+
+impl std::ops::Deref for TransactionRow {
+    type Target = finnit_abi::Transaction;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl TransactionRow {
+    fn row<'a>(&self) -> Row<'a> {
+        let row = vec![
+            Cell::from(self.id.clone()),
+            Cell::from(self.account.clone()),
+            Cell::from(self.datetime.to_string()),
+            Cell::from(self.source.clone()),
+            Cell::from(self.target.clone()),
+            Cell::from(String::from(self.amount)),
+            Cell::from(self.description.clone()),
+        ];
+
+        row.into_iter().collect::<Row>().height(1)
+    }
+}
+
 pub struct Transaction {
     sender: FrontendMessageSender,
-    transactions: Vec<finnit_abi::Transaction>,
+    transactions: Vec<TransactionRow>,
     table_state: TableState,
     scroll_state: ScrollbarState,
     styles: Styles,
@@ -41,7 +71,7 @@ pub struct Transaction {
 
 impl Transaction {
     pub fn set_transactions(&mut self, transactions: Vec<finnit_abi::Transaction>) {
-        self.transactions = transactions;
+        self.transactions = transactions.into_iter().map(TransactionRow::from).collect();
         self.scroll_state = self.scroll_state.content_length(self.transactions.len());
         self.table_state.select(Some(0));
         self.scroll_state = self.scroll_state.position(0);
@@ -68,7 +98,13 @@ impl Transaction {
                     Some(i.saturating_sub(offset))
                 }
             }
-            (Some(i), ScrollDirection::Forward) => Some(i.saturating_add(offset)),
+            (Some(i), ScrollDirection::Forward) => {
+                if i >= 6 {
+                    None
+                } else {
+                    Some(i.saturating_add(offset))
+                }
+            }
             (None, ScrollDirection::Forward) => Some(offset - 1),
             (None, ScrollDirection::Backward) => {
                 Some(self.transactions.len().saturating_sub(offset))
@@ -84,30 +120,32 @@ impl Transaction {
             .title(title.centered())
             .border_set(border::THICK);
 
-        let header = ["ID", "Amount", "Type", "Date", "Description"]
-            .into_iter()
-            .map(Cell::from)
-            .collect::<Row>()
-            .height(1);
+        let header = [
+            "ID",
+            "Account",
+            "Date",
+            "From",
+            "To",
+            "Amount",
+            "Description",
+        ]
+        .into_iter()
+        .map(Cell::from)
+        .collect::<Row>()
+        .height(1);
 
-        let rows = self.transactions.iter().map(|data| {
-            let item = data.row();
-            item.into_iter()
-                .map(|content| Cell::from(Text::from(content)))
-                .collect::<Row>()
-                .height(1)
-        });
+        let rows = self.transactions.iter().map(|data| data.row());
 
         let table = Table::new(
             rows,
             [
-                Constraint::Length(5),
-                Constraint::Length(5),
-                Constraint::Length(5),
-                Constraint::Length(5),
-                Constraint::Length(5),
-                Constraint::Length(5),
-                Constraint::Length(5),
+                Constraint::Length(6),
+                Constraint::Length(10),
+                Constraint::Length(15),
+                Constraint::Length(24),
+                Constraint::Length(24),
+                Constraint::Length(11),
+                Constraint::Length(30),
             ],
         )
         .header(header)
@@ -121,8 +159,8 @@ impl Transaction {
     fn render_scrollbar(&mut self, frame: &mut Frame, area: Rect) {
         let scrollbar = Scrollbar::default()
             .orientation(ScrollbarOrientation::VerticalRight)
-            .begin_symbol(Some("B"))
-            .end_symbol(Some("E"));
+            .begin_symbol(Some("⇑"))
+            .end_symbol(Some("⇓"));
 
         frame.render_stateful_widget(
             scrollbar,

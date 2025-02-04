@@ -3,10 +3,6 @@ use ratatui::{layout::Rect, Frame};
 
 use crate::input_events::InputEvent;
 
-pub trait TableRow {
-    fn row(&self) -> Vec<String>;
-}
-
 pub trait FinnitView {
     /// All finnit views should be able to send messages to the backend
     fn with_sender(sender: FrontendMessageSender) -> Self;

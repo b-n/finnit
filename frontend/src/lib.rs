@@ -9,7 +9,6 @@ use std::sync::{Arc, RwLock};
 use finnit_abi::{BackendMessage, FrontendMessage};
 
 mod input_events;
-mod models;
 mod timer;
 mod traits;
 mod views;
